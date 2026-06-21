@@ -413,11 +413,9 @@ function LoginPageContent() {
                   >
                     {loading ? '…' : 'Sign in'}
                   </Button>
-                  {process.env.NEXT_PUBLIC_SHOW_DEMO_CREDENTIALS === 'true' && (
-                    <p className="text-center text-xs text-brand-ink/45">
-                      Demo: fidelniyomugabo67@gmail.com / password123 · holly.worshiptv@gmail.com / password123
-                    </p>
-                  )}
+                  <p className="text-center text-xs text-brand-ink/45">
+                    Demo: cyubahirorichard250@gmail.com (admin) · holly.worshiptv@gmail.com (student) · password123
+                  </p>
                 </motion.form>
               )}
 

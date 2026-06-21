@@ -27,7 +27,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const data = await refreshSession();
         applyAuthSession(data);
       } catch {
-        clearAuth();
+        /* Only clear if there was never a stored session */
+        if (!useAuthStore.getState().accessToken) {
+          clearAuth();
+        }
       }
     }
     bootstrap();

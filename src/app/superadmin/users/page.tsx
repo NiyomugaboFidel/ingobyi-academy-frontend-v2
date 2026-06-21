@@ -2,19 +2,23 @@
 
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { Users, UserCheck, UserX } from 'lucide-react';
+import { LogOut, Pencil, UserCheck, Users, UserX } from 'lucide-react';
 import { toast } from 'sonner';
+import { AddUserPanel } from '@/components/admin/add-user-panel';
 import { DashboardShell } from '@/components/layout/dashboard-shell';
 import { PageHeader } from '@/components/dashboard/page-header';
 import { DataTable, type DataColumn } from '@/components/dashboard/data-table';
 import { ApiErrorBanner } from '@/components/errors/api-error-banner';
 import { EmptyState } from '@/components/dashboard/empty-state';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { getErrorMessage } from '@/lib/api/errors';
 import {
   activateUser,
   deactivateUser,
   listSuperadminUsers,
+  revokeUserSessions,
+  updatePlatformUser,
   type SuperadminUser,
 } from '@/lib/api/superadmin';
 import { useAuthStore } from '@/lib/auth/store';
@@ -34,18 +38,27 @@ export default function SuperadminUsersPage() {
   const token = useAuthStore((s) => s.accessToken)!;
   const queryClient = useQueryClient();
   const [actingId, setActingId] = useState<string | null>(null);
+  const [editing, setEditing] = useState<UserRow | null>(null);
+  const [editFirstName, setEditFirstName] = useState('');
+  const [editLastName, setEditLastName] = useState('');
+  const [editPassword, setEditPassword] = useState('');
 
-  const { rows, meta, page, setPage, isLoading, isFetching, error, refetch } = usePaginatedQuery<SuperadminUser>({
-    queryKey: ['superadmin', 'users'],
-    queryFn: (p, limit) => listSuperadminUsers(token, p, limit),
-    pageSize: 15,
-    enabled: !!token,
-  });
+  const { rows, meta, page, setPage, isLoading, isFetching, error, refetch } =
+    usePaginatedQuery<SuperadminUser>({
+      queryKey: ['superadmin', 'users'],
+      queryFn: (p, limit) => listSuperadminUsers(token, p, limit),
+      pageSize: 15,
+      enabled: !!token,
+    });
 
   const tableRows: UserRow[] = rows.map((u) => ({
     ...u,
     name: `${u.firstName} ${u.lastName}`.trim(),
   }));
+
+  async function invalidate() {
+    await queryClient.invalidateQueries({ queryKey: ['superadmin', 'users'] });
+  }
 
   async function toggleActive(user: UserRow) {
     setActingId(user.id);
@@ -57,7 +70,46 @@ export default function SuperadminUsersPage() {
         await activateUser(user.id, token);
         toast.success(`${user.name} activated`);
       }
-      await queryClient.invalidateQueries({ queryKey: ['superadmin', 'users'] });
+      await invalidate();
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setActingId(null);
+    }
+  }
+
+  async function handleRevokeSessions(user: UserRow) {
+    setActingId(user.id);
+    try {
+      await revokeUserSessions(user.id, token);
+      toast.success(`${user.name} signed out everywhere`);
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setActingId(null);
+    }
+  }
+
+  function openEdit(user: UserRow) {
+    setEditing(user);
+    setEditFirstName(user.firstName);
+    setEditLastName(user.lastName);
+    setEditPassword('');
+  }
+
+  async function saveEdit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editing) return;
+    setActingId(editing.id);
+    try {
+      await updatePlatformUser(editing.id, token, {
+        firstName: editFirstName.trim(),
+        lastName: editLastName.trim(),
+        ...(editPassword ? { password: editPassword } : {}),
+      });
+      toast.success('User updated');
+      setEditing(null);
+      await invalidate();
     } catch (err) {
       toast.error(getErrorMessage(err));
     } finally {
@@ -113,46 +165,85 @@ export default function SuperadminUsersPage() {
       id: 'actions',
       header: 'Actions',
       accessor: (r) => (
-        <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          disabled={actingId === r.id}
-          className="h-7 gap-1 rounded border-brand-green/15 text-[11px]"
-          onClick={() => toggleActive(r)}
-        >
-          {r.isActive ? <UserX className="h-3 w-3" /> : <UserCheck className="h-3 w-3" />}
-          {r.isActive ? 'Deactivate' : 'Activate'}
-        </Button>
+        <div className="flex flex-wrap items-center justify-end gap-1">
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            disabled={actingId === r.id}
+            className="h-7 gap-1 rounded border-brand-green/15 text-[11px]"
+            onClick={() => openEdit(r)}
+          >
+            <Pencil className="h-3 w-3" /> Edit
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            disabled={actingId === r.id}
+            className="h-7 gap-1 rounded border-amber-200 text-[11px] text-amber-800"
+            onClick={() => handleRevokeSessions(r)}
+          >
+            <LogOut className="h-3 w-3" /> Sign out
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            disabled={actingId === r.id}
+            className="h-7 gap-1 rounded border-brand-green/15 text-[11px]"
+            onClick={() => toggleActive(r)}
+          >
+            {r.isActive ? <UserX className="h-3 w-3" /> : <UserCheck className="h-3 w-3" />}
+            {r.isActive ? 'Deactivate' : 'Activate'}
+          </Button>
+        </div>
       ),
     },
   ];
 
   return (
     <DashboardShell allowedRoles={['SUPERADMIN']}>
-      
-        <PageHeader
-          title="Platform users"
-          description={`Manage all ${meta?.total ?? tableRows.length} registered accounts across the platform.`}
-          breadcrumbs={[
-            { label: 'Superadmin', href: '/superadmin/dashboard' },
-            { label: 'Users' },
-          ]}
+      <PageHeader
+        title="Platform users"
+        description={`Manage all ${meta?.total ?? tableRows.length} registered accounts.`}
+        breadcrumbs={[
+          { label: 'Superadmin', href: '/superadmin/dashboard' },
+          { label: 'Users' },
+        ]}
+      />
+
+      <AddUserPanel token={token} mode="superadmin" onSuccess={() => refetch()} />
+
+      {editing && (
+        <form
+          onSubmit={saveEdit}
+          className="mb-6 space-y-3 rounded-xl border border-brand-green/20 bg-brand-green/5 p-4"
+        >
+          <p className="text-sm font-semibold text-brand-ink">Edit {editing.email}</p>
+          <div className="flex flex-wrap gap-3">
+            <Input value={editFirstName} onChange={(e) => setEditFirstName(e.target.value)} placeholder="First name" className="h-10 max-w-[160px]" required />
+            <Input value={editLastName} onChange={(e) => setEditLastName(e.target.value)} placeholder="Last name" className="h-10 max-w-[160px]" required />
+            <Input type="password" value={editPassword} onChange={(e) => setEditPassword(e.target.value)} placeholder="New password (optional)" className="h-10 max-w-[200px]" minLength={8} />
+            <Button type="submit" disabled={actingId === editing.id} className="h-10 bg-brand-green hover:bg-brand-green-dark">Save</Button>
+            <Button type="button" variant="outline" className="h-10" onClick={() => setEditing(null)}>Cancel</Button>
+          </div>
+        </form>
+      )}
+
+      {error && (
+        <ApiErrorBanner message={getErrorMessage(error)} onRetry={() => refetch()} retrying={isFetching} />
+      )}
+
+      {!isLoading && tableRows.length === 0 && !error ? (
+        <EmptyState
+          icon={Users}
+          title="No users found"
+          description="Add users above — they can sign in without email verification."
+          primaryAction={{ label: 'Back to dashboard', href: '/superadmin/dashboard' }}
         />
-
-        {error && (
-          <ApiErrorBanner message={getErrorMessage(error)} onRetry={() => refetch()} retrying={isFetching} />
-        )}
-
-        {!isLoading && tableRows.length === 0 && !error ? (
-          <EmptyState
-            icon={Users}
-            title="No users found"
-            description="Users will appear here once they register on the platform."
-            primaryAction={{ label: 'Back to dashboard', href: '/superadmin/dashboard' }}
-          />
-        ) : (
-          <div className="dash-table-fill">
+      ) : (
+        <div className="dash-table-fill">
           <DataTable
             data={tableRows}
             columns={columns}
@@ -165,9 +256,8 @@ export default function SuperadminUsersPage() {
               meta ? { page, totalPages: meta.totalPages, total: meta.total, onPageChange: setPage } : undefined
             }
           />
-          </div>
-        )}
-      
+        </div>
+      )}
     </DashboardShell>
   );
 }

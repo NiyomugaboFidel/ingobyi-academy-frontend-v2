@@ -9,6 +9,7 @@ import {
 import type { PlatformStats } from './analytics';
 import { getPlatformStats } from './analytics';
 import type { Paginated } from './types';
+import type { UserRole } from './types';
 
 export type SuperadminUser = {
   id: string;
@@ -82,6 +83,51 @@ export function activateUser(id: string, token: string) {
 
 export function deactivateUser(id: string, token: string) {
   return apiRequest(`/superadmin/users/${id}/deactivate`, { method: 'PATCH', token });
+}
+
+export function createPlatformUser(
+  token: string,
+  payload: {
+    email: string;
+    firstName: string;
+    lastName: string;
+    password: string;
+    platformRole?: UserRole;
+    organizationId?: string;
+    orgRole?: UserRole;
+  },
+) {
+  return apiRequest<SuperadminUser>('/superadmin/users', {
+    method: 'POST',
+    token,
+    body: JSON.stringify(payload),
+  });
+}
+
+export function updatePlatformUser(
+  id: string,
+  token: string,
+  payload: {
+    firstName?: string;
+    lastName?: string;
+    platformRole?: UserRole;
+    isActive?: boolean;
+    isVerified?: boolean;
+    password?: string;
+  },
+) {
+  return apiRequest<SuperadminUser>(`/superadmin/users/${id}`, {
+    method: 'PATCH',
+    token,
+    body: JSON.stringify(payload),
+  });
+}
+
+export function revokeUserSessions(id: string, token: string) {
+  return apiRequest<{ message: string }>(`/superadmin/users/${id}/revoke-sessions`, {
+    method: 'POST',
+    token,
+  });
 }
 
 export function listPendingCourses(token: string, page = 1, limit = 20) {

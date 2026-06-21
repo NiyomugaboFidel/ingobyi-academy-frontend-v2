@@ -1,18 +1,28 @@
 'use client';
 
-import { Users } from 'lucide-react';
+import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { LogOut, Pencil, Users } from 'lucide-react';
+import { toast } from 'sonner';
+import { AddUserPanel } from '@/components/admin/add-user-panel';
 import { DashboardShell } from '@/components/layout/dashboard-shell';
 import { PageHeader } from '@/components/dashboard/page-header';
 import { DataTable, type DataColumn } from '@/components/dashboard/data-table';
 import { ApiErrorBanner } from '@/components/errors/api-error-banner';
 import { EmptyState } from '@/components/dashboard/empty-state';
 import { ListPageSkeleton } from '@/components/dashboard/table-skeleton';
-import { listOrgMembers } from '@/lib/api/organizations';
+import { Button } from '@/components/ui/button';
+import {
+  listOrgMembers,
+  revokeOrgMemberSessions,
+  updateOrgMember,
+} from '@/lib/api/organizations';
 import { listSuperadminUsers } from '@/lib/api/superadmin';
 import { getErrorMessage } from '@/lib/api/errors';
 import { useAuthStore } from '@/lib/auth/store';
 import { useActiveOrg } from '@/lib/hooks/use-active-org';
 import { usePaginatedQuery } from '@/lib/hooks/use-paginated-query';
+import type { UserRole } from '@/lib/api/types';
 
 type UserRow = {
   id: string;
@@ -34,8 +44,14 @@ const ROLE_STYLES: Record<string, string> = {
 export default function AdminUsersPage() {
   const token = useAuthStore((s) => s.accessToken)!;
   const user = useAuthStore((s) => s.user);
+  const queryClient = useQueryClient();
   const { orgId, effectiveRole } = useActiveOrg();
   const isSuperadmin = user?.platformRole === 'SUPERADMIN';
+  const [actingId, setActingId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editRole, setEditRole] = useState<UserRole>('STUDENT');
+
+  const queryKey = ['admin', 'users', effectiveRole, orgId, isSuperadmin];
 
   const {
     rows: rawRows,
@@ -47,7 +63,7 @@ export default function AdminUsersPage() {
     error,
     refetch,
   } = usePaginatedQuery({
-    queryKey: ['admin', 'users', effectiveRole, orgId, isSuperadmin],
+    queryKey,
     queryFn: async (p, limit) => {
       if (isSuperadmin) {
         return listSuperadminUsers(token, p, limit);
@@ -82,6 +98,34 @@ export default function AdminUsersPage() {
     joined: u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '—',
   }));
 
+  async function handleRevokeSessions(row: UserRow) {
+    if (!orgId) return;
+    setActingId(row.id);
+    try {
+      await revokeOrgMemberSessions(orgId, row.id, token);
+      toast.success(`${row.name} signed out everywhere`);
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setActingId(null);
+    }
+  }
+
+  async function saveRole(row: UserRow) {
+    if (!orgId) return;
+    setActingId(row.id);
+    try {
+      await updateOrgMember(orgId, row.id, token, editRole);
+      toast.success('Role updated');
+      setEditingId(null);
+      await queryClient.invalidateQueries({ queryKey });
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setActingId(null);
+    }
+  }
+
   const columns: DataColumn<UserRow>[] = [
     {
       id: 'name',
@@ -93,11 +137,28 @@ export default function AdminUsersPage() {
     {
       id: 'role',
       header: 'Role',
-      accessor: (r) => (
-        <span className={`inline-flex rounded px-2 py-0.5 text-[11px] font-semibold ${ROLE_STYLES[r.role] ?? 'border border-gray-200 bg-gray-50 text-gray-700'}`}>
-          {r.role}
-        </span>
-      ),
+      accessor: (r) =>
+        editingId === r.id && orgId ? (
+          <div className="flex items-center gap-1">
+            <select
+              value={editRole}
+              onChange={(e) => setEditRole(e.target.value as UserRole)}
+              className="h-7 rounded border px-2 text-[11px]"
+            >
+              <option value="STUDENT">Student</option>
+              <option value="TRAINER">Trainer</option>
+              <option value="PARENT">Parent</option>
+              <option value="ADMIN">Admin</option>
+            </select>
+            <Button type="button" size="sm" className="h-7 text-[10px]" onClick={() => saveRole(r)} disabled={actingId === r.id}>
+              Save
+            </Button>
+          </div>
+        ) : (
+          <span className={`inline-flex rounded px-2 py-0.5 text-[11px] font-semibold ${ROLE_STYLES[r.role] ?? 'border border-gray-200 bg-gray-50 text-gray-700'}`}>
+            {r.role}
+          </span>
+        ),
       sortValue: (r) => r.role,
     },
     {
@@ -111,6 +172,40 @@ export default function AdminUsersPage() {
       sortValue: (r) => r.status,
     },
     { id: 'joined', header: 'Joined', accessor: (r) => r.joined, sortValue: (r) => r.joined },
+    ...(orgId && !isSuperadmin
+      ? [
+          {
+            id: 'actions',
+            header: 'Actions',
+            accessor: (r: UserRow) => (
+              <div className="flex justify-end gap-1">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="h-7 gap-1 text-[11px]"
+                  onClick={() => {
+                    setEditingId(r.id);
+                    setEditRole(r.role as UserRole);
+                  }}
+                >
+                  <Pencil className="h-3 w-3" /> Role
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  disabled={actingId === r.id}
+                  className="h-7 gap-1 text-[11px] text-amber-800"
+                  onClick={() => handleRevokeSessions(r)}
+                >
+                  <LogOut className="h-3 w-3" /> Sign out
+                </Button>
+              </div>
+            ),
+          } satisfies DataColumn<UserRow>,
+        ]
+      : []),
   ];
 
   return (
@@ -120,10 +215,19 @@ export default function AdminUsersPage() {
         description={
           isSuperadmin
             ? `All ${meta?.total ?? ''} platform users.`
-            : 'Members in your organization.'
+            : 'Members in Ingobyi Innovation Hub — add, edit roles, or sign users out.'
         }
         breadcrumbs={[{ label: 'Admin', href: '/admin/dashboard' }, { label: 'Users' }]}
       />
+
+      {orgId && !isSuperadmin && (
+        <AddUserPanel
+          token={token}
+          mode="org"
+          orgId={orgId}
+          onSuccess={() => queryClient.invalidateQueries({ queryKey })}
+        />
+      )}
 
       {!orgId && !isSuperadmin && (
         <ApiErrorBanner message="No organization linked to your account." />
@@ -139,7 +243,7 @@ export default function AdminUsersPage() {
         <EmptyState
           icon={Users}
           title="No users found"
-          description="Users will appear here once they join your organization."
+          description="Add users above — they can sign in without email verification."
           primaryAction={{ label: 'Admin dashboard', href: '/admin/dashboard' }}
         />
       ) : (

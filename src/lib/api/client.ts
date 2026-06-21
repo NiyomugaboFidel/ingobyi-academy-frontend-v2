@@ -2,7 +2,6 @@ import { ApiError } from './api-error';
 import { API_BASE, apiUrl } from './api-url';
 import { refreshSession } from './token-refresh';
 import { resolveApiErrorMessage } from './errors';
-import { useAuthStore } from '@/lib/auth/store';
 import type { ApiResponse } from './types';
 
 export { ApiError } from './api-error';
@@ -66,7 +65,7 @@ export async function apiRequest<T>(
         _authRetried: true,
       });
     } catch {
-      useAuthStore.getState().clearAuth();
+      /* Keep session in store — user stays signed in until explicit logout */
     }
   }
 

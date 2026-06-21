@@ -211,6 +211,17 @@ export function addOrgMember(
   });
 }
 
+export function revokeOrgMemberSessions(
+  orgId: string,
+  userId: string,
+  token: string,
+) {
+  return apiRequest<{ message: string }>(
+    `/organizations/${orgId}/members/${userId}/revoke-sessions`,
+    { method: 'POST', token },
+  );
+}
+
 export function updateOrgMember(
   orgId: string,
   userId: string,
