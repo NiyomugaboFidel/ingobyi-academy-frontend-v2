@@ -10,22 +10,29 @@ Next.js 16 (App Router) frontend for the Ingobyi Academy platform.
 - Tailwind CSS v4
 - TanStack Query · Zustand · Socket.io client
 
+## Production URLs
+
+| Service | URL |
+|---------|-----|
+| Frontend | https://ingobyi-academy-frontend-v2.vercel.app |
+| API | https://ingobyi-academy-backend-v2-production.up.railway.app/api |
+
+Defaults in code point to these URLs when env vars are unset.
+
 ## Local development
 
 ```bash
-cp .env.local.example .env.local
+cp .env.local.example .env.local   # optional overrides
 npm install
-npm run dev          # http://localhost:3000
+npm run dev
 ```
-
-Start the [backend API](https://github.com/NiyomugaboFidel/ingobyi-academy-backend-v2) on port **3001** and seed demo data before logging in.
 
 ## Environment variables
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `NEXT_PUBLIC_API_URL` | Yes (prod) | API base, e.g. `https://your-api.railway.app/api` |
-| `NEXT_PUBLIC_WS_URL` | No | WebSocket origin (defaults from API URL) |
+| `NEXT_PUBLIC_API_URL` | No | Defaults to Railway production API |
+| `NEXT_PUBLIC_WS_URL` | No | Defaults to Railway WebSocket origin |
 | `NEXT_PUBLIC_SHOW_DEMO_CREDENTIALS` | No | `true` for demo login hints on `/login` |
 
 Copy `.env.example` or `.env.local.example` — **never commit** `.env.local`.
@@ -39,8 +46,8 @@ Copy `.env.example` or `.env.local.example` — **never commit** `.env.local`.
 
    | Name | Example |
    |------|---------|
-   | `NEXT_PUBLIC_API_URL` | `https://your-backend.up.railway.app/api` |
-   | `NEXT_PUBLIC_WS_URL` | `https://your-backend.up.railway.app` |
+   | `NEXT_PUBLIC_API_URL` | `https://ingobyi-academy-backend-v2-production.up.railway.app/api` |
+   | `NEXT_PUBLIC_WS_URL` | `https://ingobyi-academy-backend-v2-production.up.railway.app` |
    | `NEXT_PUBLIC_SHOW_DEMO_CREDENTIALS` | `false` |
 
 5. Deploy — `vercel.json` is included for build settings and security headers.
@@ -64,8 +71,10 @@ npm run lint       # ESLint
 
 | Role | Email | Password |
 |------|-------|----------|
-| Superadmin | `super@ingobyi.com` | `password123` |
-| Student | `student1@kigali-tech-school.com` | `password123` |
+| Superadmin | `fidelniyomugabo67@gmail.com` | `password123` |
+| Admin | `cyubahirorichard250@gmail.com` | `password123` |
+| Student | `holly.worshiptv@gmail.com` | `password123` |
+| Parent | `nfidele290@gmail.com` | `password123` |
 
 ## What is gitignored
 

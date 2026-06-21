@@ -1,10 +1,12 @@
 'use client';
 
 import { io, type Socket } from 'socket.io-client';
+import { PRODUCTION_WS_URL } from '@/lib/app-urls';
 
 const WS_BASE =
   process.env.NEXT_PUBLIC_WS_URL?.replace(/\/$/, '') ||
-  (process.env.NEXT_PUBLIC_API_URL?.replace(/\/api\/?$/, '') ?? 'http://localhost:3001');
+  process.env.NEXT_PUBLIC_API_URL?.replace(/\/api\/?$/, '') ||
+  PRODUCTION_WS_URL;
 
 let socket: Socket | null = null;
 let activeToken: string | null = null;

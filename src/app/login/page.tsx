@@ -415,7 +415,7 @@ function LoginPageContent() {
                   </Button>
                   {process.env.NEXT_PUBLIC_SHOW_DEMO_CREDENTIALS === 'true' && (
                     <p className="text-center text-xs text-brand-ink/45">
-                      Demo: super@ingobyi.com / password123
+                      Demo: fidelniyomugabo67@gmail.com / password123 · holly.worshiptv@gmail.com / password123
                     </p>
                   )}
                 </motion.form>

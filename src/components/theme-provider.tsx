@@ -20,6 +20,7 @@ type ThemeContextValue = {
 };
 
 const STORAGE_KEY = 'ingobyi-theme';
+const DEFAULT_THEME: ThemeMode = 'light';
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
@@ -35,13 +36,16 @@ function applyTheme(resolved: 'light' | 'dark') {
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<ThemeMode>('system');
+  const [theme, setThemeState] = useState<ThemeMode>(DEFAULT_THEME);
   const [resolved, setResolved] = useState<'light' | 'dark'>('light');
 
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY) as ThemeMode | null;
     if (stored === 'light' || stored === 'dark' || stored === 'system') {
       setThemeState(stored);
+    } else {
+      setThemeState(DEFAULT_THEME);
+      applyTheme('light');
     }
   }, []);
 
