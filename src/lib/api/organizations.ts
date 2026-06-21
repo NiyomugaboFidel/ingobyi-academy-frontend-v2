@@ -196,13 +196,18 @@ export async function listAllOrgMembers(orgId: string, token: string) {
 export function addOrgMember(
   orgId: string,
   token: string,
-  email: string,
-  role: UserRole,
+  payload: {
+    email: string;
+    role: UserRole;
+    firstName?: string;
+    lastName?: string;
+    password?: string;
+  },
 ) {
   return apiRequest<OrgMember>(`/organizations/${orgId}/members`, {
     method: 'POST',
     token,
-    body: JSON.stringify({ email, role }),
+    body: JSON.stringify(payload),
   });
 }
 

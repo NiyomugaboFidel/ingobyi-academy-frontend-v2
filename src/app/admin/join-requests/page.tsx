@@ -31,6 +31,9 @@ export default function AdminJoinRequestsPage() {
   const queryClient = useQueryClient();
   const [actingId, setActingId] = useState<string | null>(null);
   const [addEmail, setAddEmail] = useState('');
+  const [addFirstName, setAddFirstName] = useState('');
+  const [addLastName, setAddLastName] = useState('');
+  const [addPassword, setAddPassword] = useState('');
   const [addRole, setAddRole] = useState<UserRole>('STUDENT');
   const [adding, setAdding] = useState(false);
 
@@ -63,9 +66,18 @@ export default function AdminJoinRequestsPage() {
     if (!orgId || !addEmail.trim()) return;
     setAdding(true);
     try {
-      await addOrgMember(orgId, token, addEmail.trim(), addRole);
-      toast.success('Member added');
+      await addOrgMember(orgId, token, {
+        email: addEmail.trim(),
+        role: addRole,
+        firstName: addFirstName.trim() || undefined,
+        lastName: addLastName.trim() || undefined,
+        password: addPassword || undefined,
+      });
+      toast.success('Member added — they can sign in without email verification');
       setAddEmail('');
+      setAddFirstName('');
+      setAddLastName('');
+      setAddPassword('');
       await queryClient.invalidateQueries({ queryKey: ['admin', 'join-requests', orgId] });
     } catch (err) {
       toast.error(getErrorMessage(err));
@@ -170,42 +182,83 @@ export default function AdminJoinRequestsPage() {
         {!noOrg && (
           <form
             onSubmit={handleAddMember}
-            className="mb-6 flex flex-wrap items-end gap-3 rounded-xl border border-brand-green/10 bg-white p-4"
+            className="mb-6 space-y-3 rounded-xl border border-brand-green/10 bg-white p-4"
           >
-            <div className="min-w-[200px] flex-1">
-              <label className="mb-1 block text-xs font-semibold text-brand-muted">
-                Add existing user by email
-              </label>
-              <Input
-                type="email"
-                value={addEmail}
-                onChange={(e) => setAddEmail(e.target.value)}
-                placeholder="user@example.com"
-                required
-                className="h-10"
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-semibold text-brand-muted">Role</label>
-              <select
-                value={addRole}
-                onChange={(e) => setAddRole(e.target.value as UserRole)}
-                className="h-10 rounded-md border border-brand-green/18 bg-white px-3 text-sm"
+            <p className="text-sm font-semibold text-brand-ink">Add member</p>
+            <p className="text-xs text-brand-muted">
+              New accounts are verified automatically — share the email and password with the tester (no OTP email needed).
+            </p>
+            <div className="flex flex-wrap items-end gap-3">
+              <div className="min-w-[180px] flex-1">
+                <label className="mb-1 block text-xs font-semibold text-brand-muted">
+                  Email
+                </label>
+                <Input
+                  type="email"
+                  value={addEmail}
+                  onChange={(e) => setAddEmail(e.target.value)}
+                  placeholder="user@example.com"
+                  required
+                  className="h-10"
+                />
+              </div>
+              <div className="min-w-[120px]">
+                <label className="mb-1 block text-xs font-semibold text-brand-muted">
+                  First name
+                </label>
+                <Input
+                  value={addFirstName}
+                  onChange={(e) => setAddFirstName(e.target.value)}
+                  placeholder="Jane"
+                  className="h-10"
+                />
+              </div>
+              <div className="min-w-[120px]">
+                <label className="mb-1 block text-xs font-semibold text-brand-muted">
+                  Last name
+                </label>
+                <Input
+                  value={addLastName}
+                  onChange={(e) => setAddLastName(e.target.value)}
+                  placeholder="Doe"
+                  className="h-10"
+                />
+              </div>
+              <div className="min-w-[140px]">
+                <label className="mb-1 block text-xs font-semibold text-brand-muted">
+                  Password (new users)
+                </label>
+                <Input
+                  type="password"
+                  value={addPassword}
+                  onChange={(e) => setAddPassword(e.target.value)}
+                  placeholder="min. 8 characters"
+                  minLength={8}
+                  className="h-10"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-brand-muted">Role</label>
+                <select
+                  value={addRole}
+                  onChange={(e) => setAddRole(e.target.value as UserRole)}
+                  className="h-10 rounded-md border border-brand-green/18 bg-white px-3 text-sm"
+                >
+                  <option value="STUDENT">Student</option>
+                  <option value="TRAINER">Trainer</option>
+                  <option value="PARENT">Parent</option>
+                  <option value="ADMIN">Admin</option>
+                </select>
+              </div>
+              <Button
+                type="submit"
+                disabled={adding}
+                className="h-10 gap-1.5 bg-brand-green hover:bg-brand-green-dark"
               >
-                <option value="STUDENT">Student</option>
-                <option value="TRAINER">Trainer</option>
-                <option value="PARENT">Parent</option>
-                <option value="ADMIN">Admin</option>
-              </select>
+                <UserPlus className="h-4 w-4" />
+                Add member
+              </Button>
             </div>
-            <Button
-              type="submit"
-              disabled={adding}
-              className="h-10 gap-1.5 bg-brand-green hover:bg-brand-green-dark"
-            >
-              <UserPlus className="h-4 w-4" />
-              Add member
-            </Button>
           </form>
         )}
 
