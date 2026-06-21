@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+  <url>
+    <loc>https://www.coregroup.rw/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.coregroup.rw/"/>
+    <xhtml:link rel="alternate" hreflang="en-RW" href="https://www.coregroup.rw/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.coregroup.rw/"/>
+    <lastmod>2026-03-28</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+    <image:image>
+      <image:loc>https://www.coregroup.rw/logos/coregroup2.png</image:loc>
+      <image:title>Core Group Rwanda  logo</image:title>
+      <image:caption>Core Group: software, robotics, STEM education and technology consulting in Kigali and Rwanda.</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>https://www.coregroup.rw/partener/ingobyi.png</image:loc>
+      <image:title>Ingobyi partner  Core Group Rwanda</image:title>
+      <image:caption>Ingobyi platform partner logo; Core Group Rwanda technology.</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>https://www.coregroup.rw/partener/value-ed.jpeg</image:loc>
+      <image:title>Value Ed Program  Core Group partner</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://www.coregroup.rw/partener/logoWhite.svg</image:loc>
+      <image:title>PicodeGroup  Core Group partner</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://www.coregroup.rw/fidele.jpeg</image:loc>
+      <image:title>Niyomugabo Fidele  CIO, Core Group Rwanda founder</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://www.coregroup.rw/richard.jpeg</image:loc>
+      <image:title>Cyubahiro Richard  CTO, Core Group Rwanda founder</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://www.coregroup.rw/tumukunde.jpeg</image:loc>
+      <image:title>Tumukunde Victoria  Core Group team</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://www.coregroup.rw/mano.jpeg</image:loc>
+      <image:title>Mano Victoria  Core Group STEM educator</image:title>
+    </image:image>
+  </url>
+</urlset>
